@@ -1,0 +1,78 @@
+/* General App Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #F9F9F9; /* Light gray background */
+  color: #333; /* Dark text for readability */
+}
+
+.container {
+  padding: 20px;
+}
+
+.navbar {
+  margin-bottom: 30px; /* Space below navbar */
+}
+
+.navbar-light .navbar-nav .nav-link {
+  color: #2D6A4F; /* Dark green for navbar links */
+  font-weight: bold;
+}
+
+.navbar-light .navbar-nav .nav-link:hover {
+  color: #A8D5BA; /* Light green on hover */
+}
+
+.navbar-brand {
+  font-size: 1.8rem;
+  color: #2D6A4F; /* Dark green brand color */
+  font-weight: bold;
+}
+
+.navbar-light {
+  background-color: #ffffff; /* White navbar background */
+  border-bottom: 2px solid #E0E0E0; /* Light gray border under navbar */
+}
+
+.navbar-nav {
+  margin-left: auto;
+}
+
+a {
+  text-decoration: none;
+}
+
+/* Extra padding for the container content */
+.mt-4 {
+  margin-top: 40px;
+}
+
+/* Global Button Styles */
+button {
+  padding: 12px 20px;
+  border-radius: 5px;
+  font-size: 1rem;
+  border: none;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.9;
+}
+
+/* Add responsive styling for mobile */
+@media (max-width: 576px) {
+  .navbar-nav {
+      flex-direction: column;
+      align-items: flex-start;
+  }
+
+  .navbar {
+      margin-bottom: 10px;
+  }
+}

@@ -1,0 +1,36 @@
+/* Layout.css */
+
+.layout {
+    display: flex;
+  }
+  
+  .sidebar-container {
+    width: 250px; /* Sidebar width */
+    background-color: #f4f4f4;
+    padding: 20px;
+  }
+  
+  .content-container {
+    flex-grow: 1;
+    padding: 20px;
+  }
+  
+  .sidebar-menu {
+    list-style-type: none;
+    padding: 0;
+  }
+  
+  .sidebar-menu li {
+    margin-bottom: 15px;
+  }
+  
+  .sidebar-menu li a {
+    text-decoration: none;
+    color: #333;
+    font-size: 18px;
+  }
+  
+  .sidebar-menu li a:hover {
+    color: #4CAF50; /* Hover effect for links */
+  }
+  

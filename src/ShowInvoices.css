@@ -1,0 +1,53 @@
+/* Invoice Card Styling */
+.invoice-card {
+    background-color: #F8F9FA; /* Light background */
+    border-radius: 12px;
+    padding: 20px;
+    transition: transform 0.3s ease-in-out;
+    min-height: 250px; /* Ensures consistent height */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.invoice-card:hover {
+    transform: translateY(-5px);
+}
+
+/* Invoice Text Styling */
+.invoice-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #2D6A4F;
+    margin-bottom: 10px; /* Adds spacing below the title */
+}
+
+.invoice-text {
+    font-size: 1rem;
+    color: #333;
+    margin-bottom: 15px; /* Adds spacing below the invoice details */
+}
+
+/* Invoice Button Styling (Matches Sidebar Colors) */
+.invoice-btn {
+    background-color: #A8D5BA;
+    color: #2D6A4F;
+    border: none;
+    padding: 8px 15px;
+    font-size: 1rem;
+    border-radius: 6px;
+    transition: 0.3s;
+    margin-top: 10px; /* Ensures spacing between button and content */
+}
+
+.invoice-btn:hover {
+    background-color: #2D6A4F;
+    color: white;
+}
+
+/* Responsive Layout Adjustments */
+@media (max-width: 768px) {
+    .invoice-card {
+        min-height: auto; /* Allows flexibility for smaller screens */
+    }
+}
