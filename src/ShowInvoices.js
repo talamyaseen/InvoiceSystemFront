@@ -34,6 +34,13 @@ const ShowInvoices = () => {
         }
     };
 
+    const calculateTotalAmount = () => {
+        return updatedItems.reduce(
+            (total, item) => total + item.quantity * item.price, // Assuming each item has a 'price' property
+            0
+        );
+    };
+
     const handleDelete = async () => {
         try {
             const token = localStorage.getItem("token");
@@ -66,6 +73,7 @@ const ShowInvoices = () => {
             const updatedInvoice = {
                 ...selectedInvoice,
                 items: updatedItems,
+                totalAmount: calculateTotalAmount(), // Update total amount
             };
 
             // Send the updated invoice data to the server
@@ -221,3 +229,5 @@ const ShowInvoices = () => {
 };
 
 export default ShowInvoices;
+
+
