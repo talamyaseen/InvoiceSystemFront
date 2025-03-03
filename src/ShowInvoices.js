@@ -1,21 +1,46 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Table, Button, Modal, Form } from "react-bootstrap";
+import { Table, Button, Modal, Form, InputGroup, FormControl, Pagination } from "react-bootstrap";
 
 const ShowInvoices = () => {
     const [invoices, setInvoices] = useState([]);
+    const [filteredInvoices, setFilteredInvoices] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const [showConfirm, setShowConfirm] = useState(false);
     const [showUpdateForm, setShowUpdateForm] = useState(false);
     const [selectedInvoiceId, setSelectedInvoiceId] = useState(null);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [updatedItems, setUpdatedItems] = useState([]);
     const [error, setError] = useState("");
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [roles, setRoles] = useState([]);  // Store user roles
+    const pageSize = 10;
 
     useEffect(() => {
-        fetchInvoices();
-    }, []);
+        const token = localStorage.getItem("token");
+        const userRoles = JSON.parse(localStorage.getItem("roles")) || [];  // Assuming roles are stored in localStorage
+        setRoles(userRoles);
 
-    const fetchInvoices = async () => {
+        if (token) {
+            fetchInvoices(currentPage);
+        } else {
+            setError("You must log in first.");
+        }
+    }, [currentPage]);
+
+    useEffect(() => {
+        if (searchQuery === "") {
+            setFilteredInvoices(invoices);
+        } else {
+            const filtered = invoices.filter((invoice) =>
+                invoice.id.toString().includes(searchQuery)
+            );
+            setFilteredInvoices(filtered);
+        }
+    }, [searchQuery, invoices]);
+
+    const fetchInvoices = async (page) => {
         try {
             const token = localStorage.getItem("token");
             if (!token) {
@@ -27,18 +52,23 @@ const ShowInvoices = () => {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
+                params: {
+                    page: page - 1,
+                    size: pageSize,
+                },
             });
-            setInvoices(response.data);
+
+            if (Array.isArray(response.data)) {
+                setInvoices(response.data);
+                setFilteredInvoices(response.data);
+            } else {
+                setError("Invalid response format.");
+            }
+
+            setTotalPages(response.headers['x-total-pages']);
         } catch (err) {
             setError("Failed to fetch invoices.");
         }
-    };
-
-    const calculateTotalAmount = () => {
-        return updatedItems.reduce(
-            (total, item) => total + item.quantity * item.price, // Assuming each item has a 'price' property
-            0
-        );
     };
 
     const handleDelete = async () => {
@@ -73,17 +103,14 @@ const ShowInvoices = () => {
             const updatedInvoice = {
                 ...selectedInvoice,
                 items: updatedItems,
-                totalAmount: calculateTotalAmount(), // Update total amount
             };
 
-            // Send the updated invoice data to the server
             await axios.put(`http://localhost:8081/invoices/${selectedInvoiceId}`, updatedInvoice, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                 },
             });
 
-            // Update the invoice list with the new data
             setInvoices(
                 invoices.map((invoice) =>
                     invoice.id === selectedInvoiceId ? updatedInvoice : invoice
@@ -96,29 +123,26 @@ const ShowInvoices = () => {
         }
     };
 
-    const handleItemQuantityChange = (itemId, newQuantity) => {
-        const updatedItemsList = updatedItems.map((item) =>
-            item.itemId === itemId ? { ...item, quantity: newQuantity } : item
-        );
-        setUpdatedItems(updatedItemsList);
+    const handlePageChange = (page) => {
+        setCurrentPage(page);
     };
 
-    const handleItemRemove = (itemId) => {
-        const updatedItemsList = updatedItems.filter((item) => item.itemId !== itemId);
-        setUpdatedItems(updatedItemsList);
-    };
-
-    const openUpdateForm = (invoice) => {
-        setSelectedInvoiceId(invoice.id);
-        setSelectedInvoice(invoice);
-        setUpdatedItems(invoice.items);
-        setShowUpdateForm(true);
-    };
+    // Check if the user has the "ROLE_AUDITOR" role
+    const isAuditor = roles.includes("ROLE_AUDITOR");
 
     return (
-        <div className="container mt-4">
+        <div className="container mt-4" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
             <h2 className="text-center">Invoices</h2>
             {error && <p className="text-danger">{error}</p>}
+
+            <InputGroup className="mb-3">
+                <FormControl
+                    placeholder="Search by Invoice ID"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </InputGroup>
+
             <Table striped bordered hover>
                 <thead>
                     <tr>
@@ -130,45 +154,73 @@ const ShowInvoices = () => {
                     </tr>
                 </thead>
                 <tbody>
-                    {invoices.map((invoice) => (
-                        <tr key={invoice.id}>
-                            <td>{invoice.id}</td>
-                            <td>{invoice.status}</td>
-                            <td>${invoice.totalAmount.toFixed(2)}</td>
-                            <td>
-                                <ul>
-                                    {invoice.items.map((item) => (
-                                        <li key={item.itemId}>
-                                            {item.itemName} (Quantity: {item.quantity})
-                                        </li>
-                                    ))}
-                                </ul>
-                            </td>
-                            <td>
-                                <Button
-                                    variant="danger"
-                                    onClick={() => {
-                                        setSelectedInvoiceId(invoice.id);
-                                        setShowConfirm(true);
-                                    }}
-                                >
-                                    Delete
-                                </Button>
-                                <Button
-                                    style={{
-                                        backgroundColor: "#2D6A4F", // Custom color
-                                        borderColor: "#2D6A4F",
-                                    }}
-                                    className="ms-2"
-                                    onClick={() => openUpdateForm(invoice)}
-                                >
-                                    Update
-                                </Button>
+                    {Array.isArray(filteredInvoices) && filteredInvoices.length > 0 ? (
+                        filteredInvoices.map((invoice) => (
+                            <tr key={invoice.id}>
+                                <td>{invoice.id}</td>
+                                <td>{invoice.status}</td>
+                                <td>${invoice.totalAmount.toFixed(2)}</td>
+                                <td>
+                                    <ul>
+                                        {invoice.items.map((item) => (
+                                            <li key={item.itemId}>
+                                                {item.itemName} (Quantity: {item.quantity})
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </td>
+                                <td>
+                                    {/* Conditionally render "Update" and "Delete" buttons */}
+                                    {!isAuditor && (
+                                        <>
+                                            <Button
+                                                variant="danger"
+                                                onClick={() => {
+                                                    setSelectedInvoiceId(invoice.id);
+                                                    setShowConfirm(true);
+                                                }}
+                                            >
+                                                Delete
+                                            </Button>
+                                            <Button
+                                                style={{
+                                                    backgroundColor: "#2D6A4F",
+                                                    borderColor: "#2D6A4F",
+                                                }}
+                                                className="ms-2"
+                                                onClick={() => setSelectedInvoice(invoice) & setShowUpdateForm(true)}
+                                            >
+                                                Update
+                                            </Button>
+                                        </>
+                                    )}
+                                </td>
+                            </tr>
+                        ))
+                    ) : (
+                        <tr>
+                            <td colSpan="5" className="text-center">
+                                No invoices found.
                             </td>
                         </tr>
-                    ))}
+                    )}
                 </tbody>
             </Table>
+
+            {/* Pagination */}
+            <Pagination>
+                <Pagination.Prev onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1} />
+                {[...Array(totalPages)].map((_, index) => (
+                    <Pagination.Item
+                        key={index}
+                        active={index + 1 === currentPage}
+                        onClick={() => handlePageChange(index + 1)}
+                    >
+                        {index + 1}
+                    </Pagination.Item>
+                ))}
+                <Pagination.Next onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages} />
+            </Pagination>
 
             {/* Confirmation Modal */}
             <Modal show={showConfirm} onHide={() => setShowConfirm(false)}>
@@ -193,24 +245,19 @@ const ShowInvoices = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
-                        {updatedItems.map((item) => (
+                        {selectedInvoice?.items?.map((item) => (
                             <div key={item.itemId} className="mb-3">
                                 <Form.Label>{item.itemName}</Form.Label>
                                 <Form.Control
                                     type="number"
                                     value={item.quantity}
-                                    onChange={(e) =>
-                                        handleItemQuantityChange(item.itemId, e.target.value)
-                                    }
-                                    min="0"
+                                    onChange={(e) => {
+                                        const updated = selectedInvoice.items.map((i) =>
+                                            i.itemId === item.itemId ? { ...i, quantity: e.target.value } : i
+                                        );
+                                        setSelectedInvoice({ ...selectedInvoice, items: updated });
+                                    }}
                                 />
-                                <Button
-                                    variant="danger"
-                                    className="mt-2"
-                                    onClick={() => handleItemRemove(item.itemId)}
-                                >
-                                    Remove Item
-                                </Button>
                             </div>
                         ))}
                     </Form>
@@ -229,5 +276,3 @@ const ShowInvoices = () => {
 };
 
 export default ShowInvoices;
-
-

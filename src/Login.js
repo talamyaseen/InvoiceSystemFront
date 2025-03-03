@@ -20,11 +20,12 @@ const Login = ({ setToken }) => {
             });
 
             const token = response.data.accessToken;
+            const roles=response.data.roles;
             localStorage.setItem("token", token); // Store token in localStorage
-            setToken(token); // Update parent state with token
-            setError(""); // Clear error if login is successful
-
-            // Navigate to the dashboard after login
+            localStorage.setItem("roles", JSON.stringify(roles)); 
+            setToken(token);
+            setError("");
+           console.log(roles);
             navigate("/dashboard");
         } catch (err) {
             setError("Invalid username or password");

@@ -5,36 +5,57 @@ import SignUp from "./SignUp";
 import Dashboard from "./Dashboard";
 import InvoiceForm from "./InvoiceForm";
 import ShowInvoices from "./ShowInvoices";
-import Layout from "./Layout"; // Layout component
-import "./App.css"; // Import your CSS file
-
+import Layout from "./Layout";
+import HomePage from "./HomePage";
+import FetchData from "./FetchData";
+import "./App.css";
 
 function App() {
-    const [token, setToken] = useState(localStorage.getItem("token")); // Retrieve token from localStorage
+    const [token, setToken] = useState(localStorage.getItem("token"));
+    const [roles, setRoles] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Ensure token is updated on page load/refresh
-        setToken(localStorage.getItem("token"));
+        const storedToken = localStorage.getItem("token");
+        const userRoles = JSON.parse(localStorage.getItem("roles")) || [];
+        setToken(storedToken);
+        setRoles(userRoles);
+        setLoading(false);
     }, []);
+
+    const isAuditorOrSuperUser = roles.includes("ROLE_AUDITOR") || roles.includes("ROLE_SUPERUSER");
+
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        localStorage.removeItem("roles");
+        setToken(null);
+        setRoles([]);
+    };
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
 
     return (
         <Router>
             <div className="container">
                 <Routes>
-                    {/* Login and SignUp routes */}
+                    <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<Login setToken={setToken} />} />
                     <Route path="/signup" element={<SignUp />} />
-
-                    {/* Protected Route: Only accessible if the user is logged in */}
-                    <Route path="/" element={token ? <Layout /> : <Navigate to="/login" />}>
-                        {/* Nested routes that are displayed within the Layout */}
-                        <Route path="dashboard" element={<Dashboard />} />
-                        <Route path="create-invoice" element={<InvoiceForm />} />
-                        <Route path= "/show-invoices" element={<ShowInvoices />} />
-                    </Route>
-                   
-                    {/* Catch-all Route for invalid URLs */}
-                    <Route path="*" element={<Navigate to="/login" />} />
+                    {token ? (
+                        <Route path="/" element={<Layout handleLogout={handleLogout} />}>
+                            <Route path="dashboard" element={<Dashboard />} />
+                            <Route 
+                                path="create-invoice" 
+                                element={roles.includes("ROLE_AUDITOR") ? <Navigate to="/dashboard" /> : <InvoiceForm />} 
+                            />
+                            <Route path="show-invoices" element={<ShowInvoices />} />
+                            {isAuditorOrSuperUser && <Route path="fetch" element={<FetchData />} />}
+                        </Route>
+                    ) : (
+                        <Route path="*" element={<Navigate to="/login" />} />
+                    )}
                 </Routes>
             </div>
         </Router>
